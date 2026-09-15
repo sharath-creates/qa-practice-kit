@@ -1,104 +1,233 @@
 # QA Practice Kit
 
-26 graded exercises covering the commonly used features of **Maven**, **TestNG** and
-**Selenium**, against two stable public practice sites. The scaffolding is done; the
-testing is yours.
+A set of **26 small exercises** that teach you how to write automated tests for websites.
 
-```bash
-mvn clean test
-```
-
-A fresh clone reports **0 failed, 24 skipped**. Every unattempted task throws
-`SkipException`, so the build stays green and the skip count is your worklist. Each task
-you finish flips from skipped to passed.
+You do not need to know anything about testing to start. You do need to be comfortable
+reading and writing a little Java.
 
 ---
 
-## What you need
+## What is an automated test?
 
-JDK 11 or newer, Maven 3.6.3+, and Chrome. Nothing else: Selenium Manager fetches the
-driver at runtime.
+A program that opens a web browser, clicks around a website the way a person would, and
+then checks that the right thing happened.
 
-```bash
-mvn -version     # check the JDK line. It is often not the one on PATH.
-```
+If it did, the test **passes**. If it did not, the test **fails** and tells you what it
+expected versus what it actually saw.
 
-The build fails in two seconds with a readable message on an older JDK rather than
-surfacing it later as a bytecode version mismatch inside a Selenium jar.
+That is the whole idea. Everything else is detail.
 
-## Systems under test
+---
 
-| Site | Used by | Why |
+## What you need installed
+
+| Thing | What it does | Check it works |
 |---|---|---|
-| [the-internet.herokuapp.com](https://the-internet.herokuapp.com) | Level 2 | One page per Selenium feature. Frames, alerts, waits, tables, uploads. |
-| [saucedemo.com](https://www.saucedemo.com) | Level 3 | A real e-commerce flow with six user personas and `data-test` attributes throughout. |
+| **Java** (version 11 or newer) | The language the tests are written in | `java -version` |
+| **Maven** | Downloads the libraries and runs everything | `mvn -version` |
+| **Google Chrome** | The browser the tests will drive | Open it |
 
-Both are free, need no signup, and are the canonical practice targets. Credentials are in
-the task javadoc.
+You do **not** need to download a browser driver. The project handles that by itself.
 
-## Layout
+> **The most common setup problem.** `mvn -version` prints its own Java version on the
+> last line, and it is often a different one from `java -version`. Maven is the one that
+> matters. If it says 1.8, point `JAVA_HOME` at a newer Java and open a new terminal.
+> The build will stop in two seconds with a clear message if this is wrong, so you will
+> not waste time guessing.
 
-```
-src/main/java/com/qapractice/
-├── config/     Config          layered configuration          GIVEN
-├── driver/     DriverFactory   browser options, Grid support  GIVEN
-│               DriverManager   one driver per thread          GIVEN
-├── pages/      BasePage        waits and interactions         GIVEN, read it first
-│               sauce/          your page objects              LEVEL 3
-├── support/    Text, Downloads normalisation, file waiting    GIVEN
-└── katas/      PriceParser     plain Java to test in Level 1  GIVEN
-                Basket
+---
 
-src/test/java/com/qapractice/
-├── tasks/      Level1..Level4  24 stubs. This is the assignment.
-├── solutions/  worked answers  Look after attempting, not before.
-└── listeners/  worked answers to Level 4
-```
-
-## Running
+## Run it once, right now
 
 ```bash
-mvn clean test                    # the task suite
-mvn clean test -Pheaded           # watch the browser
-mvn clean test -Psolutions        # the worked answers
-mvn clean test -Pparallel         # four threads
-
-mvn test -Dtest=Level2SeleniumCore                       # one class
-mvn test -Dtest=Level2SeleniumCore#formAuthentication    # one method
-mvn test -Dgroups=fast -DsuiteFile=                      # one group, no suite file
-
-mvn allure:serve                  # the HTML report
+cd qa-practice-kit
+mvn clean test
 ```
 
-## The levels
+The first run takes a few minutes because Maven is downloading libraries. Later runs take
+seconds.
 
-| Level | Tasks | Covers |
-|---|---:|---|
-| 1 — TestNG without a browser | 5 | `@Test`, fixtures, data providers, expectedExceptions, timeOut, invocationCount, groups, `@Parameters` |
-| 2 — Selenium core | 10 | Locator strategies, explicit waits, alerts, frames, windows, Actions, tables, upload, download |
-| 3 — Page objects and a real flow | 5 | POM, external test data, sorting, cart state, checkout arithmetic |
-| 4 — Framework engineering | 4 | Config layering, ThreadLocal and parallelism, ITestListener, retry analyzer |
-| 5 — Reporting and CI | 2 | Allure, GitHub Actions |
+**You should see something like this:**
 
-Levels 1 to 4 live as stubs in `src/test/java/com/qapractice/tasks/`. Read the javadoc
-above each method: it is the specification, and it deliberately tells you the behaviour
-rather than the selectors. Finding locators is part of the job.
+```
+Tests run: 24, Failures: 0, Errors: 0, Skipped: 24
+BUILD SUCCESS
+```
 
-Level 5 has no stubs; the acceptance criteria are in the assignment brief and the answers
-are `.github/workflows/practice.yml` and the Allure configuration already in `pom.xml`.
+### "Skipped" is correct. Nothing is broken.
 
-## How to work through it
+Every exercise starts as an empty stub that says *"not done yet"*. Skipped means
+*"you have not written this one"*, not *"this is broken"*.
 
-1. Read `BasePage` before Level 2. Everything you are about to write by hand is in there.
-2. Attempt a task before opening the solution. Reading a solution feels like learning and is not.
-3. After each task passes, break it on purpose and confirm it goes red with a message that
-   explains why. A test that has only ever passed is unverified.
-4. Keep a note of what surprised you. That list is worth more than the code afterwards.
+So your progress looks like this:
 
-## Rules a reviewer would apply
+- **Day one:** 24 skipped, 0 passed
+- **Later:** 18 skipped, 6 passed
+- **Finished:** 0 skipped, 24 passed
 
-- No `Thread.sleep`, anywhere.
-- No `By` locator in a Level 3 test class.
-- No assertion inside a page object.
-- Every assertion carries a `.as(...)` description.
-- Each test passes when run alone with `-Dtest=Class#method`.
+Turning skips into passes is the entire assignment.
+
+---
+
+## The three tools, one sentence each
+
+You will keep meeting these three names. Here is all you need at the start.
+
+- **Maven** fetches the libraries your code needs, compiles it, and runs it.
+  The file it reads is `pom.xml`.
+- **TestNG** decides which tests to run and reports pass, fail or skip.
+  Anything marked `@Test` is a test.
+- **Selenium** is what actually drives the browser. Click this, type that, read that text.
+
+They stack: Maven starts TestNG, TestNG runs your test, your test uses Selenium, Selenium
+drives Chrome.
+
+---
+
+## What all these folders are
+
+```
+qa-practice-kit/
+├── pom.xml                  The shopping list and the build instructions
+└── src/
+    ├── main/java/...        Machinery, already written for you
+    │   ├── config/            Where the website addresses and settings live
+    │   ├── driver/            Starts and stops the browser
+    │   ├── pages/             BasePage: the waiting and clicking helpers
+    │   └── katas/             Two tiny Java classes you test in Level 1
+    └── test/
+        ├── java/.../tasks/       YOUR HOMEWORK. Start here.
+        ├── java/.../solutions/   The answers. Read them after trying.
+        └── resources/
+            ├── config/           Settings you can change
+            ├── suites/           Lists of which tests to run
+            └── testdata/         Files the tests use
+```
+
+**You will only edit things under `tasks/`** and, from Level 3 onward, add a few new files
+under `pages/`.
+
+---
+
+## How to do one exercise
+
+1. Open `src/test/java/com/qapractice/tasks/Level1TestNgBasics.java`.
+2. Read the comment block above the first method. **That comment is the instructions.**
+   It tells you what the test must prove, not how to write it.
+3. Delete the line `throw Todo.task("1.1");` and write your test instead.
+4. Run just that one test:
+   ```bash
+   mvn test -Dtest=Level1TestNgBasics#firstTest -DsuiteFile=
+   ```
+5. Keep going until it passes.
+6. Then break it on purpose. Change an expected value, run it again, and check it fails
+   with a message that makes sense. Change it back.
+
+Step 6 sounds like a waste of time and is not. A test that has only ever passed might not
+be checking anything at all. Ten seconds of proof is worth it.
+
+---
+
+## The order to work through
+
+| Level | What it teaches | Browser? |
+|---|---|---|
+| **1** | How TestNG works, using two tiny Java classes | No |
+| **2** | Selenium itself: clicking, typing, waiting, alerts, tables | Yes |
+| **3** | How to organise tests so they stay maintainable | Yes |
+| **4** | The supporting machinery: parallel runs, screenshots on failure | Yes |
+| **5** | Reports and running tests automatically on GitHub | No |
+
+Level 1 has no browser on purpose. Learning the test runner without a browser in the way
+is much faster, and it means a failure can only be your test, never a flaky website.
+
+---
+
+## Commands you will actually use
+
+```bash
+mvn clean test                  # run everything
+mvn clean test -Pheaded         # same, but watch the browser do it
+mvn clean test -Psolutions      # run the answers instead of your work
+
+# run one class
+mvn test -Dtest=Level2SeleniumCore
+
+# run one single test
+mvn test -Dtest=Level2SeleniumCore#formAuthentication
+
+mvn -version                    # which Java is Maven using
+```
+
+`-Pheaded` is worth using whenever something confuses you. Watching the browser click
+through your test explains most problems in about five seconds.
+
+---
+
+## The websites you are testing
+
+Two free practice sites. No signup, nothing to install.
+
+- **[the-internet.herokuapp.com](https://the-internet.herokuapp.com)** has one page per
+  feature: pop-up alerts, frames, tables, file uploads. Used in Level 2.
+- **[saucedemo.com](https://www.saucedemo.com)** is a small pretend shop with a login and
+  a checkout. Used in Level 3. The password for every user is `secret_sauce`.
+
+The exercises tell you what the site does, not which buttons to click. Finding those
+yourself is part of the job, and the real job works the same way.
+
+---
+
+## When something goes wrong
+
+| What you see | What it usually means |
+|---|---|
+| `Skipped: 24` | Normal. You have not done those exercises yet. |
+| `class file has wrong version` | Maven is using an old Java. Check `mvn -version`. |
+| `NoSuchElementException` | Selenium could not find something on the page. Your selector is wrong, or you looked before the page finished loading. |
+| `TimeoutException` | You waited for something that never happened. Run with `-Pheaded` and watch. |
+| `StaleElementReferenceException` | The page reloaded part of itself after you found an element. Find it again. |
+| `BUILD FAILURE` with no tests run | Your code does not compile. Scroll up to the first error. |
+
+Stuck on a test for more than twenty minutes? Open the **Hint** on that task in the
+assignment page. Still stuck after another twenty? Open the solution, read it, close it,
+then write the test again from memory.
+
+---
+
+## Words you will meet
+
+**Assertion.** The line that says what must be true. If it is not true, the test fails.
+
+**Locator.** How you tell Selenium which thing on the page you mean, usually a CSS
+selector or an id.
+
+**Wait.** Telling Selenium to pause until something appears, rather than guessing how
+long the page will take. Never use a fixed sleep.
+
+**Page object.** A class that holds all the clicking and typing for one screen, so your
+tests read like sentences instead of selectors. Level 3 is about this.
+
+**Flaky.** A test that passes sometimes and fails other times without the code changing.
+The most annoying thing in testing, and most of Level 2 is about avoiding it.
+
+**Headless.** Running the browser invisibly. Faster, and the default here. Use
+`-Pheaded` to see it.
+
+**Suite.** A list of which tests to run, kept in `src/test/resources/suites/`.
+
+---
+
+## The one rule
+
+**Try every exercise before opening the solution.**
+
+Reading a worked answer feels like learning and mostly is not. You will nod along, close
+the file, and find you cannot reproduce it. Struggle first. The solutions are there to
+check yourself against, not to copy.
+
+---
+
+## Licence
+
+MIT. Do whatever you like with it.
