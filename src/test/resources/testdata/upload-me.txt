@@ -1,0 +1,2 @@
+This file exists so the upload task has a real, version-controlled input
+instead of depending on something that happens to be on your disk.

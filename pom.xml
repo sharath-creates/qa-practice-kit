@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.qapractice</groupId>
+  <artifactId>qa-practice-kit</artifactId>
+  <version>1.0.0</version>
+  <packaging>jar</packaging>
+
+  <name>QA Practice Kit</name>
+  <description>26 graded exercises covering the commonly used features of Maven, TestNG and Selenium</description>
+
+  <properties>
+    <!--
+      Java 11, not 17. Selenium 4, TestNG 7.10 and AssertJ all run on 11, so the
+      kit builds on whatever JDK is already installed. Nothing here uses a
+      language feature above 11.
+    -->
+    <maven.compiler.release>11</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+    <selenium.version>4.27.0</selenium.version>
+    <testng.version>7.10.2</testng.version>
+    <assertj.version>3.26.3</assertj.version>
+    <allure.version>2.29.0</allure.version>
+    <aspectj.version>1.9.22.1</aspectj.version>
+    <log4j.version>2.24.1</log4j.version>
+
+    <enforcer.version>3.5.0</enforcer.version>
+    <compiler.version>3.13.0</compiler.version>
+    <surefire.version>3.5.2</surefire.version>
+    <allure.maven.version>2.15.2</allure.maven.version>
+
+    <!-- Runtime knobs. Every one is overridable with -Dkey=value -->
+    <suiteFile>src/test/resources/suites/tasks.xml</suiteFile>
+    <browser>chrome</browser>
+    <headless>true</headless>
+    <threads>1</threads>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.seleniumhq.selenium</groupId>
+      <artifactId>selenium-java</artifactId>
+      <version>${selenium.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.testng</groupId>
+      <artifactId>testng</artifactId>
+      <version>${testng.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <version>${assertj.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.qameta.allure</groupId>
+      <artifactId>allure-testng</artifactId>
+      <version>${allure.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.aspectj</groupId>
+      <artifactId>aspectjweaver</artifactId>
+      <version>${aspectj.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-core</artifactId>
+      <version>${log4j.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-api</artifactId>
+      <version>${log4j.version}</version>
+    </dependency>
+    <!-- Routes Selenium's own SLF4J output into Log4j2 -->
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-slf4j2-impl</artifactId>
+      <version>${log4j.version}</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <!--
+          Fails at `validate` with a readable message on an old JDK, instead of
+          "class file has wrong version 55.0, should be 52.0" halfway through
+          compilation, which points at a Selenium jar rather than the real cause.
+        -->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>${enforcer.version}</version>
+        <executions>
+          <execution>
+            <id>enforce-build-environment</id>
+            <goals><goal>enforce</goal></goals>
+            <configuration>
+              <rules>
+                <requireJavaVersion>
+                  <version>[11,)</version>
+                  <message>
+                    This kit needs JDK 11 or newer. Selenium 4.14+ ships Java 11 bytecode.
+                    Run `mvn -version` to see which JDK Maven is using (often not the one on
+                    PATH), then point JAVA_HOME at a JDK 11+ install.
+                  </message>
+                </requireJavaVersion>
+                <requireMavenVersion><version>[3.6.3,)</version></requireMavenVersion>
+              </rules>
+              <failFast>true</failFast>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>${compiler.version}</version>
+        <configuration>
+          <!-- Hardcoded, not a property reference, so nothing outside this file
+               can override it silently. -->
+          <release>11</release>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${surefire.version}</version>
+        <configuration>
+          <suiteXmlFiles>
+            <suiteXmlFile>${suiteFile}</suiteXmlFile>
+          </suiteXmlFiles>
+          <systemPropertyVariables>
+            <browser>${browser}</browser>
+            <headless>${headless}</headless>
+            <allure.results.directory>${project.build.directory}/allure-results</allure.results.directory>
+          </systemPropertyVariables>
+          <properties>
+            <property>
+              <name>dataproviderthreadcount</name>
+              <value>${threads}</value>
+            </property>
+          </properties>
+          <argLine>
+            -javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/${aspectj.version}/aspectjweaver-${aspectj.version}.jar"
+          </argLine>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>io.qameta.allure</groupId>
+        <artifactId>allure-maven</artifactId>
+        <version>${allure.maven.version}</version>
+        <configuration>
+          <reportVersion>${allure.version}</reportVersion>
+          <resultsDirectory>${project.build.directory}/allure-results</resultsDirectory>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <profile>
+      <id>solutions</id>
+      <properties>
+        <suiteFile>src/test/resources/suites/solutions.xml</suiteFile>
+      </properties>
+    </profile>
+    <profile>
+      <id>headed</id>
+      <properties><headless>false</headless></properties>
+    </profile>
+    <profile>
+      <id>parallel</id>
+      <properties><threads>4</threads></properties>
+    </profile>
+  </profiles>
+</project>

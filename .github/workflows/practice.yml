@@ -1,0 +1,82 @@
+name: Practice suite
+
+# Worked answer to task 5.2.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: Which suite to run
+        type: choice
+        options: [tasks, solutions]
+        default: tasks
+
+permissions:
+  contents: read
+
+concurrency:
+  group: practice-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: jdk${{ matrix.java }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # Java 11 is the declared floor, so CI proves the floor still holds
+        # rather than only testing whatever the newest runner ships.
+        java: ['11', '17']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: temurin
+          cache: maven
+
+      - name: Show browser version
+        run: google-chrome --version || chromium --version || true
+
+      - name: Run the ${{ inputs.suite || 'tasks' }} suite
+        env:
+          ENV: ci
+        run: >
+          mvn -B -ntp clean test
+          -DsuiteFile=src/test/resources/suites/${{ inputs.suite || 'tasks' }}.xml
+          -Dheadless=true
+
+      - name: Summarise results
+        if: always()
+        run: |
+          if [ -f target/surefire-reports/testng-results.xml ]; then
+            python3 - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import xml.etree.ElementTree as ET
+          root = ET.parse("target/surefire-reports/testng-results.xml").getroot()
+          print("## Results\n")
+          print("| Passed | Failed | Skipped | Total |")
+          print("|---:|---:|---:|---:|")
+          print(f"| {root.get('passed')} | {root.get('failed')} | {root.get('skipped')} | {root.get('total')} |\n")
+          print(f"Skipped means 'task not attempted yet', not 'broken'.\n")
+          PY
+          fi
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports-jdk${{ matrix.java }}
+          path: |
+            target/surefire-reports
+            target/allure-results
+            target/logs
+          retention-days: 14

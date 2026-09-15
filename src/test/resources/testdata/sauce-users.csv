@@ -1,0 +1,7 @@
+username,password,shouldReachInventory,expectedError
+standard_user,secret_sauce,true,
+locked_out_user,secret_sauce,false,Epic sadface: Sorry, this user has been locked out.
+problem_user,secret_sauce,true,
+performance_glitch_user,secret_sauce,true,
+no_such_user,secret_sauce,false,Epic sadface: Username and password do not match any user in this service
+standard_user,wrong_password,false,Epic sadface: Username and password do not match any user in this service

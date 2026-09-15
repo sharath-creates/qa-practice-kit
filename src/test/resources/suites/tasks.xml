@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<!--
+  Your worklist. Every unimplemented task throws SkipException, so a fresh
+  clone reports 0 failed and N skipped. Each task you finish flips from
+  skipped to passed. That count is your progress bar.
+
+  Task 4.2 asks you to turn parallel execution on here.
+-->
+<suite name="QA Practice Kit - Tasks" verbose="1">
+
+  <!-- Task 1.5 reads this. Do not rename it. -->
+  <parameter name="expectedCurrency" value="USD"/>
+
+  <listeners>
+    <!-- Tasks 4.3 and 4.4 ask you to register your listeners here. -->
+  </listeners>
+
+  <test name="Level 1 - TestNG without a browser">
+    <classes>
+      <class name="com.qapractice.tasks.Level1TestNgBasics"/>
+    </classes>
+  </test>
+
+  <test name="Level 2 - Selenium core">
+    <classes>
+      <class name="com.qapractice.tasks.Level2SeleniumCore"/>
+    </classes>
+  </test>
+
+  <test name="Level 3 - Page objects and a real flow">
+    <classes>
+      <class name="com.qapractice.tasks.Level3PageObjects"/>
+    </classes>
+  </test>
+
+  <test name="Level 4 - Framework engineering">
+    <classes>
+      <class name="com.qapractice.tasks.Level4Framework"/>
+    </classes>
+  </test>
+</suite>

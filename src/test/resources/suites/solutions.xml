@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<!--
+  The worked answers. Run with: mvn clean test -Psolutions
+  Look at these only after attempting the task yourself. Reading a solution
+  feels like learning and is not.
+
+  Note the parallel settings, which differ per <test> block on purpose.
+  Level 1 shares a mutable list across its methods to demonstrate fixture
+  order, so it must run single-threaded. The browser levels have no shared
+  state and run three at a time. Getting this wrong is exactly the class of
+  bug task 4.2 is about.
+-->
+<suite name="QA Practice Kit - Solutions" verbose="1">
+
+  <parameter name="expectedCurrency" value="USD"/>
+
+  <listeners>
+    <listener class-name="com.qapractice.listeners.TestListener"/>
+    <listener class-name="com.qapractice.listeners.RetryTransformer"/>
+  </listeners>
+
+  <test name="Level 1 - single threaded by necessity">
+    <classes>
+      <class name="com.qapractice.solutions.Level1Solutions"/>
+    </classes>
+  </test>
+
+  <test name="Levels 2 and 3 - browser, parallel" parallel="methods" thread-count="3">
+    <classes>
+      <class name="com.qapractice.solutions.Level2Solutions"/>
+      <class name="com.qapractice.solutions.Level3Solutions"/>
+    </classes>
+  </test>
+</suite>
